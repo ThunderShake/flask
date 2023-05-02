@@ -1,11 +1,10 @@
 from flask import Flask, request, json, jsonify, make_response
 from crud import Crud
 from routes_helper import RoutesHelper
-
+import os
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'ESTETRABALHOEPARAO20'
 
 
 
@@ -57,4 +56,4 @@ def login():
     return make_response(message), 401
 
 if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv("PORT", default=5000))
+    app.run(debug=True)
