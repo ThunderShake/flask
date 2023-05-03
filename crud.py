@@ -92,7 +92,7 @@ class Crud:
         try:
             con = self.connect()
             sql_string = f"SELECT * FROM {self.table_name} WHERE {table_id} = %s"
-            p_state = con.cursor(prepared=True)
+            p_state = con.cursor(prepared=True, dictionary=True)
             p_state.execute(sql_string, [id_])
             return p_state.fetchone()
         except mysql.connector.Error as e:
