@@ -37,13 +37,13 @@ def create_user():
             message = 'Missing required fields'
             return make_response({'error': message}), 400
     else:
-        message = 'Content type not supported. Expected aplication/json'
+        message = 'Content type not supported. Expected application/json'
         return make_response({'error': message}, 415)
 
 @app.route('/api/users/login', methods=['POST'])
 def login():
     email = request.json.get('email')
-    password = request.json.get('password')
+    password = request.json.get('pw')
 
     users_table = Crud('user_')
     users = users_table.getElements_and_operator(['email', 'pw'], [email, password])
