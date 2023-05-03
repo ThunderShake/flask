@@ -52,36 +52,6 @@ def login():
     message = {'error': 'Invalid username or password'}
     return make_response(message), 401
 
-@app.route('/api/users/info', methods=['POST'])
-def get_user():
-    user_id = request.json.get('id')
-    if user_id:
-        users_table = Crud('user_')
-        user = users_table.get_element_by_pk(user_id, 'id')
-        if user:
-            return make_response(user)
-        else:   
-            return make_response({'error':'User not found.'}), 404
-    else:
-        return make_response({'error':'Missing id field.'}), 404
-
-@app.route('/api/users/update', methods=['POST'])
-def update_user():
-    json = request.json
-    user_id = json.get('id') 
-    if user_id:
-        handler = Crud('user_')
-        for key in json.keys():
-            if key not in handler.get_columns():
-                return make_response({'error':'Invalid fields for update.'})
-        element = handler.get_element_by_pk(user_id, 'id')
-        if(element):
-            RoutesHelper.update_element('user_', json.items(), user_id)
-            return make_response({'message':'Updated.'})
-        else:   
-            return make_response({'error':'User not found.'}), 404
-    else:
-        return make_response({'error':'Missing id field.'}), 404
 
 
 if __name__ == '__main__':
