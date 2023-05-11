@@ -3,11 +3,7 @@ from crud import Crud
 from routes_helper import RoutesHelper
 import os
 
-
 app = Flask(__name__)
-
-
-
 
 #/api/users/register
 @app.route('/api/users/register', methods=['POST'])
@@ -83,6 +79,64 @@ def update_user():
     else:
         return make_response({'error':'Missing id field.'}), 404
 
+
+@app.route('/api/products/search', methods=['POST']) # recebe um json com um elemento (coluna:valor) query coluna like valor
+def get_products_like():
+    json = request.json
+    keys = list(json.keys())
+    if len(keys) == 1:
+        handler = Crud('product')
+        db_columns = handler.get_columns()
+        search_col = keys[0]
+        if(search_col not in db_columns):
+            return make_response({'error':'Missing a valid column to search.'}), 404
+        search_value = json.get(search_col)
+        if search_col:
+            handler = Crud('product')
+            items = handler.getElementsLike(search_col, search_value)
+            return make_response(items)
+    else:
+        return make_response({'error':'Only 1 parameter can be sent.'})
+
+@app.route('/api/products/info', methods=['POST'])
+def get_product():
+    product_id = request.json.get('id')
+    if product_id:
+        handler = Crud('product')
+        product = handler.get_element_by_pk(product_id, 'id')
+        if product:
+            return make_response(product)
+        else:   
+            return make_response({'error':'Product not found.'}), 404
+    else:
+        return make_response({'error':'Missing id field.'}), 404
+
+@app.route('/api/products/filter', methods=['POST'])
+def get_product_by_filter():
+    json = request.json
+    handler = Crud('product')
+    cols = handler.get_columns()
+
+    if all(key in cols for key in json.keys()):
+        cols = []
+        values = []
+        for col, value in json.items():
+            cols.append(col)
+            values.append(value)
+        
+        items = handler.getElements_and_operator(cols, values)
+        if items:
+            return make_response(items)
+        else:
+            return make_response({'error':'Products not found'}), 404
+    else:
+        return make_response({'error':'Invalid fields sent.'}), 400
+
+@app.route('/api/categories/list', methods=['GET'])
+def get_categories():
+    handler = Crud('categories')
+    categories_list = handler.get_all_elements()
+    return make_response(categories_list)
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))

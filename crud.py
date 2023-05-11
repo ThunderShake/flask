@@ -168,13 +168,13 @@ class Crud:
     def getElementsLike(self, col, value):
         try:
             con = self.connect()
-            sql_string = f"select * from {self.table_name} where {col} like ?"
-            p_state = con.prepareStatement(sql_string)
-            p_state.setString(1, value)
-            res = p_state.executeQuery()
-            return res
+            sql_string = f"select * from {self.table_name} where {col} like %s"
+            wildcard_value = f"%{value}%"
+            p_state = con.cursor(dictionary=True)
+            p_state.execute(sql_string, (wildcard_value,))
+            return p_state.fetchall()
         except pymysql.err.MySQLError as e:
-            print(str(e) + "\nerror on database")
+            print(str(e) + "\nerror on getElementsLike")
             return None
     
     def get_tables(self):
