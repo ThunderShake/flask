@@ -138,5 +138,107 @@ def get_categories():
     categories_list = handler.get_all_elements()
     return make_response(categories_list)
 
+@app.route('/api/models/search', methods=['POST'])
+def get_models_like():
+    json = request.json
+    keys = list(json.keys())
+    if len(keys) == 1:
+        handler = Crud('model')
+        db_columns = handler.get_columns()
+        search_col = keys[0]
+        if(search_col not in db_columns):
+            return make_response({'error':'Missing a valid column to search.'}), 404
+        search_value = json.get(search_col)
+        if search_col:
+            handler = Crud('model')
+            items = handler.getElementsLike(search_col, search_value)
+            return make_response(items)
+    else:
+        return make_response({'error':'Only 1 parameter can be sent.'})
+
+@app.route('/api/models/info', methods=['POST'])
+def get_model():
+    product_id = request.json.get('id')
+    if product_id:
+        handler = Crud('model')
+        product = handler.get_element_by_pk(product_id, 'id')
+        if product:
+            return make_response(product)
+        else:   
+            return make_response({'error':'Model not found.'}), 404
+    else:
+        return make_response({'error':'Missing id field.'}), 404
+
+@app.route('/api/models/filter', methods=['POST'])
+def get_model_by_filter():
+    json = request.json
+    handler = Crud('model')
+    cols = handler.get_columns()
+
+    if all(key in cols for key in json.keys()):
+        cols = []
+        values = []
+        for col, value in json.items():
+            cols.append(col)
+            values.append(value)
+        
+        items = handler.getElements_and_operator(cols, values)
+        if items:
+            return make_response(items)
+        else:
+            return make_response({'error':'Models not found'}), 404
+    else:
+        return make_response({'error':'Invalid fields sent.'}), 400
+
+@app.route('/api/models/price', methods=['POST'])
+def get_prices():
+    id_model = request.json.get('id_model')
+    if id_model:
+        handler = Crud('association')
+        result = handler.get_elements_by_string_field('id_model', id_model)
+        if result:
+            products_id = []
+            for association in result:
+                products_id.append(association.get('id_product'))
+            prices_rows = []
+            for product in products_id:
+                handler = Crud('prices')
+                prices = handler.get_elements_by_string_field('product_id', product)
+                for row in prices:
+                    prices_rows.append({key:row[key] for key in row})
+            for element in prices_rows:
+                handler = Crud('supermarket')
+                supermarket = handler.get_element_by_pk(element['supermarket_id'], 'id')
+                element['supermarket_id'] = supermarket['name']
+            
+            most_recent_by_supermarket = {}
+
+            for item in prices_rows:
+                supermarket_id = item['supermarket_id']
+                if supermarket_id in most_recent_by_supermarket:
+                    if item['updated_at'] > most_recent_by_supermarket[supermarket_id]['updated_at']:
+                        most_recent_by_supermarket[supermarket_id] = item
+                else:
+                    most_recent_by_supermarket[supermarket_id] = item
+            most_recent_items = list(most_recent_by_supermarket.values())
+            return most_recent_items
+        else:
+            return make_response({'error':'Models not found'}), 404
+    else:
+        return make_response({'error':'Missing id field.'}), 404
+
+@app.route('/api/supermarket/info')
+def get_supermarket():
+    supermarket_id = request.json.get('id')
+    if supermarket_id:
+        handler = Crud('supermarket')
+        supermarket = handler.get_element_by_pk(supermarket_id, 'id')
+        if supermarket:
+            return make_response(supermarket)
+        else:   
+            return make_response({'error':'Model not found.'}), 404
+    else:
+        return make_response({'error':'Missing id field.'}), 404
+
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))

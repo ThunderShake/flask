@@ -1,6 +1,7 @@
 from crud import Crud
 from flask import jsonify
 
+
 class RoutesHelper:
     @staticmethod
     def get_all_elements(table_name):
@@ -41,5 +42,5 @@ class RoutesHelper:
             else:
                 cols.append(col)
                 values.append(value)
-                
+    
         handler.update_element(id_value, cols, values, 'id')

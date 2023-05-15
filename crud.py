@@ -103,45 +103,13 @@ class Crud:
         try:
             con = self.connect()
             sql_string = f"select * from {self.table_name} where {col} = %s"
-            p_state = con.cursor(prepared=True)
-            p_state.execute(sql_string, value)
-            res = p_state.fetchone()
+            p_state = con.cursor(prepared=True, dictionary=True)
+            p_state.execute(sql_string, (value,))
+            res = p_state.fetchall()
             return res
         except mysql.connector.Error as e:
             print(e, "\nerror on database")
             return None
-
-    def validate_login(self, list_, getname, getpass, db_email, db_pass):
-        validator = False
-        try:
-            while list_.next():
-                if getname == list_.getString(db_email) and getpass == list_.getString(db_pass):
-                    validator = True
-                    break
-                    #print("getname:" + getname + "\ngetpass:" + getpass + "\nrset.name:" + list_.getString(uname)+ "\nrset.pass:" + list_.getString(pass));
-        except pymysql.err.MySQLError as ex:
-            print("\n", ex, "Error on validate String")
-        print("\n", validator)
-        return validator
-
-    def get_login_id(self, list_, getemail, getpass, db_email, db_pass):
-        try:
-            while list_.next():
-                if getemail == list_.getString(db_email) and getpass == list_.getString(db_pass):
-                    return list_.getInt("id")
-                    #print("getname:" + getname + "\ngetpass:" + getpass + "\nrset.name:" + list_.getString(uname)+ "\nrset.pass:" + list_.getString(pass));
-        except pymysql.err.MySQLError as ex:
-            print("\n", ex, "Error on validate String")
-        return None
-
-    def print_result_set(self, y):
-        try:
-            #ResultSet x = this.getAllElements();
-            x = y
-            while x.next():
-                print(x.getInt(1), "|", x.getString(2), "|", x.getString(3))
-        except pymysql.err.MySQLError as ex:
-            print(ex)
 
     #####
 
