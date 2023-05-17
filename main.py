@@ -227,7 +227,7 @@ def get_prices():
     else:
         return make_response({'error':'Missing id field.'}), 404
 
-@app.route('/api/supermarket/info')
+@app.route('/api/supermarket/info', methods=['POST'])
 def get_supermarket():
     supermarket_id = request.json.get('id')
     if supermarket_id:
@@ -236,9 +236,87 @@ def get_supermarket():
         if supermarket:
             return make_response(supermarket)
         else:   
-            return make_response({'error':'Model not found.'}), 404
+            return make_response({'error':'Supermarket not found.'}), 404
     else:
         return make_response({'error':'Missing id field.'}), 404
 
+@app.route('/api/users/lists/create', methods=['POST'])
+def create_prod_list():
+    handler = Crud('user_lists')
+    json = request.json
+    cols = handler.get_columns()
+    if(json.get('user_id')):
+        if (all(key in cols for key in json.keys())):
+                cols, values = RoutesHelper.insert_element('user_lists', json.items())
+                inserted_list = handler.getElements_and_operator(cols, values)
+                list_row = inserted_list[0]
+                list_id = list_row['id']
+                return make_response({
+                    'message': 'List created successfully',
+                    'list_id': list_id
+                }),201
+        else:
+            message = 'Some fields may be misspelled'
+            return make_response({'error': message}), 400
+    else:
+        return make_response({'error':'Please specifie a user_id value.'}), 400
+
+@app.route('/api/users/lists/update', methods=['POST'])
+def update_lists():
+    json = request.json
+    list_id = json.get('id') 
+    if list_id:
+        handler = Crud('user_lists')
+        for key in json.keys():
+            if key not in handler.get_columns():
+                return make_response({'error':'Invalid fields for update.'})
+        element = handler.get_element_by_pk(list_id, 'id')
+        if(element):
+            RoutesHelper.update_element('user_lists', json.items(), list_id)
+            return make_response({'message':'Updated.'})
+        else:   
+            return make_response({'error':'List not found.'}), 404
+    else:
+        return make_response({'error':'Missing id field.'}), 404
+
+@app.route('/api/users/lists/delete', methods=['POST'])
+def delete_list():
+    json = request.json
+    list_id = json.get('id')
+    if list_id:
+        list_handler = Crud('user_lists')
+        prod_handler = Crud('product_list')
+        prod_handler.delete_element(list_id, 'user_lists_id')
+        list_handler.delete_element(list_id, 'id')
+        return make_response({'message':'Deleted.'})
+    else:
+        return make_response({'error':'Please provide a list_id.'}), 404
+
+@app.route('/api/users/lists/filter', methods=['POST'])
+def get_users_lists():
+    json = request.json
+    user_id = json.get('user_id')
+    if user_id:
+        handler = Crud('user_lists')
+        result = handler.get_elements_by_string_field('user_id', user_id)
+        if result:
+            return make_response(result)
+        else:
+            return make_response({'error':'Not found.'})
+    else:
+        return make_response({'error':'Please provide a user_id.'}), 404
+    
+
+@app.route('/api/user/lists/products/create', methods=['POST'])
+def add_product_to_user_list():
+    json = request.json
+    user_id = json.get('user_lists_id')
+    model_id = json.get('model_id')
+    if user_id and model_id:
+        handler = Crud('product_list')
+        handler.insert(list(json.keys()),[user_id, model_id])
+        return make_response({'message':'Inserted.'})
+    
+    
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))

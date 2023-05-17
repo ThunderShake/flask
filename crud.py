@@ -66,17 +66,18 @@ class Crud:
         except pymysql.err.MySQLError as e:
             print(e, "\nError on update")
         
-    def delete_element(self, id_, table_id):
+    def delete_element(self, value, col):
         try:
             con = self.connect()
-            sql_string = f"DELETE FROM {self.table_name} WHERE {table_id} = %s"
+            sql_string = f"DELETE FROM {self.table_name} WHERE {col} = %s"
             p_state = con.cursor(prepared=True)
-            p_state.execute(sql_string, [id_])
+            p_state.execute(sql_string, [value])
             con.commit()
             print("deleted")
         except mysql.connector.Error as e:
             print(e, "\nError on delete")
-            
+    
+
     def get_all_elements(self):
         try:
             con = self.connect()
