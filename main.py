@@ -312,10 +312,31 @@ def add_product_to_user_list():
     json = request.json
     user_id = json.get('user_lists_id')
     model_id = json.get('model_id')
+    print(list(json.keys()))
+    print([user_id, model_id])
     if user_id and model_id:
         handler = Crud('product_list')
         handler.insert(list(json.keys()),[user_id, model_id])
         return make_response({'message':'Inserted.'})
+    else:
+        return make_response({'error': 'Missing required fields.'})
+    
+@app.route('/api/user/lists/products/info', methods=['POST'])
+def get_products_in_a_list():
+    json = request.json
+    list_id = json.get('id')
+    if list_id:
+        handler = Crud('product_list')
+        products_list = handler.get_elements_by_string_field('user_lists_id', list_id)
+        models =[]
+        for list_row in products_list:
+            model_id = list_row['model_id']
+            model_handler = Crud('model')
+            model= model_handler.get_element_by_pk(model_id, 'id')
+            models.append({key:model[key] for key in model})
+        return make_response(models)
+    else:
+        return make_response({'error':'Missing id field'})
     
     
 if __name__ == '__main__':
