@@ -302,7 +302,7 @@ def get_users_lists():
         if result:
             return make_response(result)
         else:
-            return make_response({'error':'Not found.'})
+            return make_response({'error':'Not found.'}), 404
     else:
         return make_response({'error':'Please provide a user_id.'}), 404
     
@@ -312,14 +312,12 @@ def add_product_to_user_list():
     json = request.json
     user_id = json.get('user_lists_id')
     model_id = json.get('model_id')
-    print(list(json.keys()))
-    print([user_id, model_id])
     if user_id and model_id:
         handler = Crud('product_list')
         handler.insert(list(json.keys()),[user_id, model_id])
         return make_response({'message':'Inserted.'})
     else:
-        return make_response({'error': 'Missing required fields.'})
+        return make_response({'error': 'Missing required fields.'}), 404
     
 @app.route('/api/user/lists/products/info', methods=['POST'])
 def get_products_in_a_list():
@@ -336,7 +334,7 @@ def get_products_in_a_list():
             models.append({key:model[key] for key in model})
         return make_response(models)
     else:
-        return make_response({'error':'Missing id field'})
+        return make_response({'error':'Missing id field'}), 404
     
     
 if __name__ == '__main__':
