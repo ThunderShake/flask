@@ -386,6 +386,7 @@ def get_cart_price():
 
         for x in values:
             response = requests.post(url, json={'id_model':x})
+            print(response.status_code)
             if response.status_code == 200:
                 json_holder.append(response.json())
         
@@ -393,6 +394,7 @@ def get_cart_price():
         auchan_cart = 0
 
         for models_list in json_holder:
+            print(models_list)
             for model in models_list:
                 if model.get('supermarket_id') == 'Continente':
                     continente_cart += round(model.get('price'), 2)
@@ -409,6 +411,7 @@ def get_cart_price():
             })
 
         return make_response(response_payload), 200
+    
     return make_response({'error':'Missing models_id field.'}), 404
 
 
