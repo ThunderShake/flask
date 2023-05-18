@@ -44,3 +44,35 @@ class RoutesHelper:
                 values.append(value)
     
         handler.update_element(id_value, cols, values, 'id')
+
+    @staticmethod
+    def remove_dicts_from_list(data):
+        return [item for item in data if not isinstance(item, dict)]
+
+    @staticmethod
+    def get_prices(result):
+        products_id = []
+        for association in result:
+            products_id.append(association.get('id_product'))
+        prices_rows = []
+        for product in products_id:
+            handler = Crud('prices')
+            prices = handler.get_elements_by_string_field('product_id', product)
+            for row in prices:
+                prices_rows.append({key:row[key] for key in row})
+        for element in prices_rows:
+            handler = Crud('supermarket')
+            supermarket = handler.get_element_by_pk(element['supermarket_id'], 'id')
+            element['supermarket_id'] = supermarket['name']
+            
+        most_recent_by_supermarket = {}
+
+        for item in prices_rows:
+            supermarket_id = item['supermarket_id']
+            if supermarket_id in most_recent_by_supermarket:
+                if item['updated_at'] > most_recent_by_supermarket[supermarket_id]['updated_at']:
+                    most_recent_by_supermarket[supermarket_id] = item
+            else:
+                most_recent_by_supermarket[supermarket_id] = item
+        most_recent_items = list(most_recent_by_supermarket.values())
+        return most_recent_items
