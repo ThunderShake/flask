@@ -373,13 +373,13 @@ def delete_product_in_a_list():
     else:
         return make_response({'error': 'Missing required fields.'}), 404
 
-@app.route('/api/cart/prices', methods=['GET'])
+@app.route('/api/cart/prices', methods=['POST'])
 def get_cart_price():
     
     # {'models_id':[1,2,3,4,5,6,7]}
     url = 'https://flask-production-951c.up.railway.app/api/models/price'
     json = request.json
-    values=json.get('models_id')
+    values = json.get('models_id')
     
     if values:
         json_holder = []
