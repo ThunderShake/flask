@@ -222,7 +222,7 @@ def get_prices():
                 else:
                     most_recent_by_supermarket[supermarket_id] = item
             most_recent_items = list(most_recent_by_supermarket.values())
-            return most_recent_items
+            return make_response(most_recent_items)
         else:
             return make_response({'error':'Models not found'}), 404
     else:
@@ -382,15 +382,12 @@ def get_cart_price():
     values = json.get('models_id')
     
     if values:
-        print(values)
         json_holder = []
-        print(0)
+        # Aqui ta a puta armada
+        
         for x in values:
-            try:
-                response = requests.post(url, json={'id_model':x})
-            except requests.exceptions.RequestException as e:
-                print(e)
-                return make_response("hola")
+            response = requests.post(url, json={'id_model':x})
+            
             if response.status_code == 200:
                 json_holder.append(response.json())
         
