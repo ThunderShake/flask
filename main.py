@@ -2,6 +2,7 @@ from flask import Flask, request, json, jsonify, make_response
 from crud import Crud
 from routes_helper import RoutesHelper
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -313,9 +314,21 @@ def add_product_to_user_list():
     user_id = json.get('user_lists_id')
     model_id = json.get('model_id')
     if user_id and model_id:
+        cols = []
+        values = []
+
+        for col, value in json.items():
+                cols.append(col)
+                values.append(value)
+
         handler = Crud('product_list')
-        handler.insert(list(json.keys()),[user_id, model_id])
-        return make_response({'message':'Inserted.'})
+        in_db = handler.getElements_and_operator(cols, values)
+        if not in_db:
+            handler.insert(cols, values)
+            return make_response({'message':'Inserted.'})
+        else:
+            return make_response({'error':'This item is already in the list.'}), 409
+        
     else:
         return make_response({'error': 'Missing required fields.'}), 404
     
@@ -335,7 +348,69 @@ def get_products_in_a_list():
         return make_response(models)
     else:
         return make_response({'error':'Missing id field'}), 404
+
+@app.route('/api/user/lists/products/delete', methods=['POST'])
+def delete_product_in_a_list():
+    json = request.json
+    list_id = json.get('user_lists_id')
+    model_id = json.get('model_id')
+    if list_id and model_id:
+        handler = Crud('product_list')
+        
+        cols = []
+        values = []
+        
+        for col, value in json.items():
+            cols.append(col)
+            values.append(value)
+        
+        result = handler.getElements_and_operator(cols, values)
+        if len(result) == 1:
+            handler.delete_element(result[0]['id'], 'id')
+            return make_response({'message':'Deleted.'})
+        else:
+            return make_response({'error': 'That item does not exist.'}), 404
+    else:
+        return make_response({'error': 'Missing required fields.'}), 404
+
+@app.route('/api/cart/prices', methods=['GET'])
+def get_cart_price():
     
+    # {'models_id':[1,2,3,4,5,6,7]}
+    url = 'https://flask-production-951c.up.railway.app/api/models/price'
+    json = request.json
+    values=json.get('models_id')
     
+    if values:
+        json_holder = []
+
+        for x in values:
+            response = requests.post(url, json={'id_model':x})
+            if response.status_code == 200:
+                json_holder.append(response.json())
+        
+        continente_cart = 0
+        auchan_cart = 0
+
+        for models_list in json_holder:
+            for model in models_list:
+                if model.get('supermarket_id') == 'Continente':
+                    continente_cart += round(model.get('price'), 2)
+                if model.get('supermarket_id') == 'Auchan':
+                    auchan_cart += round(model.get('price'), 2)
+        
+        response_payload = []
+        supermarkets = ['Continente', 'Auchan']
+        carts = [continente_cart, auchan_cart]
+        for x in range(2):
+            response_payload.append({
+                'supermarket': supermarkets[x],
+                'cart': carts[x]
+            })
+
+        return make_response(response_payload), 200
+    return make_response({'error':'Missing models_id field.'}), 404
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))
