@@ -384,9 +384,11 @@ def get_cart_price():
     if values:
         print(values)
         json_holder = []
-
+        print(0)
         for x in values:
+            print(1)
             response = requests.post(url, json={'id_model':x})
+            print(2)
             if response.status_code == 200:
                 json_holder.append(response.json())
         
