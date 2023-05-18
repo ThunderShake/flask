@@ -382,7 +382,7 @@ def get_cart_price():
     values = json.get('models_id')
     
     if values:
-        print('crl')
+        print(values)
         json_holder = []
 
         for x in values:
