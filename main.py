@@ -354,28 +354,28 @@ def delete_product_in_a_list():
 def get_cart_price():
 
     json = request.json
-    models_id = json.get('models_id')
+    models_qty = json.get('models_qty')
     
-    if models_id:
+    if models_qty:
         json_holder = []
         # Aqui ta a puta armada
         
-        for id_model in models_id:
+        for id_model, qty in models_qty:
             handler = Crud('association')
             result = handler.get_elements_by_string_field('id_model', id_model)
             
             if result:
-                json_holder.append(RoutesHelper.get_prices(result))
+                json_holder.append([RoutesHelper.get_prices(result), qty])
         
         continente_cart = 0
         auchan_cart = 0
 
-        for models_list in json_holder:
+        for models_list, qty in json_holder:
             for model in models_list:
                 if model.get('supermarket_id') == 'Continente':
-                    continente_cart += round(model.get('price'), 2)
+                    continente_cart += (round(model.get('price'), 2) * qty)
                 if model.get('supermarket_id') == 'Auchan':
-                    auchan_cart += round(model.get('price'), 2)
+                    auchan_cart += (round(model.get('price'), 2) * qty)
         
         response_payload = []
         supermarkets = ['Continente', 'Auchan']
@@ -388,7 +388,8 @@ def get_cart_price():
 
         return make_response(response_payload), 200
     
-    return make_response({'error':'Missing models_id field.'}), 404
+    return make_response({'error':'Missing models_qty field.'}), 404
+
 
 
 if __name__ == '__main__':
