@@ -382,11 +382,11 @@ def get_cart_price():
     values = json.get('models_id')
     
     if values:
+        print('crl')
         json_holder = []
 
         for x in values:
             response = requests.post(url, json={'id_model':x})
-            print(response.status_code)
             if response.status_code == 200:
                 json_holder.append(response.json())
         
@@ -394,7 +394,6 @@ def get_cart_price():
         auchan_cart = 0
 
         for models_list in json_holder:
-            print(models_list)
             for model in models_list:
                 if model.get('supermarket_id') == 'Continente':
                     continente_cart += round(model.get('price'), 2)
