@@ -49,6 +49,36 @@ def login():
     message = {'error': 'Invalid username or password'}
     return make_response(message), 401
 
+@app.route('/api/google/login', methods=['POST'])
+def login_google():
+    req = request.json
+
+    name = req.get('name')
+    email = req.get('email')
+    
+
+    if not (name and email):
+        return make_response({'error':'Está em falta name ou email no body do request.'})
+
+    users_table = Crud('user')
+    users = users_table.getElements_and_operator(['email'], [email])
+
+    if(users):
+        for user in users:
+            if(user['email'] == email):
+                message = {"message": "Log in com sucesso.", 'user_id': user['id']}
+                return make_response(message), 200
+    
+    user_table = Crud('user')
+    cols, values = RoutesHelper.insert_element('user', req.items())
+    user_holder = user_table.getElements_and_operator(cols, values)
+    user_row = user_holder[0]
+    user_id = user_row['id']
+    return make_response({
+                'message': 'Utilizador criado com sucesso.',
+                'user_id': user_id
+    }),201
+
 @app.route('/api/users/info', methods=['POST'])
 def get_user():
     user_id = request.json.get('id')
@@ -163,6 +193,10 @@ def get_model():
     if product_id:
         handler = Crud('model')
         product = handler.get_element_by_pk(product_id, 'id')
+        views_value = product['views']
+        views_value += 1
+        handler.update_element(product_id, ['views'], [views_value], 'id')
+        product = handler.get_element_by_pk(product_id, 'id')
         if product:
             return make_response(product)
         else:   
@@ -175,10 +209,11 @@ def get_model_by_filter():
     json = request.json
     handler = Crud('model')
     cols = handler.get_columns()
-
+    
     if all(key in cols for key in json.keys()):
         cols = []
         values = []
+
         for col, value in json.items():
             cols.append(col)
             values.append(value)
@@ -190,6 +225,63 @@ def get_model_by_filter():
             return make_response({'error':'Models not found'}), 404
     else:
         return make_response({'error':'Invalid fields sent.'}), 400
+    
+@app.route('/api/models/filterlike', methods=['POST'])
+def get_model_by_filter_w_like():
+    json = request.json
+    handler = Crud('model')
+    cols = handler.get_columns()
+
+    if 'name' in json.keys():
+
+        if all(key in cols for key in json.keys()):
+            cols = []
+            values = []
+        else:
+            return make_response({'error':'Invalid fields sent.'}), 400
+
+        for col, value in json.items():
+            cols.append(col)
+            values.append(value)
+
+
+        handler = Crud('model')
+        cnx = handler.connect()
+        cursor = cnx.cursor(prepared=True, dictionary=True)
+
+        sql_query = f'SELECT * FROM {handler.table_name} WHERE '
+
+        set_sql = []
+
+        for i in range(len(cols)):
+            if cols[i] == 'name':
+                sql_query += cols[i] + ' like %s '
+                set_sql. append(f'%{values[i]}%')
+            else:
+                sql_query += cols[i] + ' = ? '
+                set_sql.append(values[i])
+                
+                 
+            if i < ((len(cols) - 1)):
+                
+                sql_query += "and "
+
+        sql_query += ';'
+        print(sql_query)
+        
+        cursor.execute(sql_query, set_sql)
+        
+        result = cursor.fetchall()
+        cursor.close()
+        cnx.close()
+
+        if result:
+            return make_response(result), 200
+    
+        return make_response({'error':'Models not found'}), 404
+            
+    
+        
 
 @app.route('/api/models/price', methods=['POST'])
 def get_prices():
