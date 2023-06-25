@@ -70,6 +70,8 @@ def login_google():
                 return make_response(message), 200
     
     user_table = Crud('user_')
+
+    req.update({'platform':'google'})
     cols, values = RoutesHelper.insert_element('user_', req.items())
     user_holder = user_table.getElements_and_operator(cols, values)
     user_row = user_holder[0]
