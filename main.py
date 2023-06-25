@@ -60,8 +60,8 @@ def login_google():
     if not (name and email):
         return make_response({'error':'Está em falta name ou email no body do request.'})
 
-    users_table = Crud('user')
-    users = users_table.getElements_and_operator(['email'], [email])
+    users_table = Crud('user_')
+    users = users_table.getElements_and_operator(['name','email'], [name, email])
 
     if(users):
         for user in users:
@@ -69,8 +69,8 @@ def login_google():
                 message = {"message": "Log in com sucesso.", 'user_id': user['id']}
                 return make_response(message), 200
     
-    user_table = Crud('user')
-    cols, values = RoutesHelper.insert_element('user', req.items())
+    user_table = Crud('user_')
+    cols, values = RoutesHelper.insert_element('user_', req.items())
     user_holder = user_table.getElements_and_operator(cols, values)
     user_row = user_holder[0]
     user_id = user_row['id']
